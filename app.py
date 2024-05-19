@@ -90,3 +90,6 @@ def fetch_token(user_name: str):
         error_msg = "Json decode error while processing"
         logger.error(error_msg)
     return jsonify({'msg': error_msg})
+
+
+setup_config()
