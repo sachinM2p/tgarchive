@@ -103,9 +103,12 @@ def search_files():
     try:
         response = requests.post(url=TG_SEARCH_API, data=request.get_data(cache=False), headers=request.headers)
         logger.info(f"Received response with status:: {response.status_code} {response.reason}")
-        return response
+        return jsonify(json.loads(response.content)), HTTPStatus.OK if response.ok else HTTPStatus.BAD_REQUEST
     except KeyError:
         err_msg = "Invalid request data received"
+        logger.error(err_msg)
+    except json.JSONDecodeError:
+        err_msg = "Failed to parse json data"
         logger.error(err_msg)
     except requests.exceptions.RequestException as err:
         err_msg = f"Failed to search:: {err.__class__.__name__}"
