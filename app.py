@@ -100,8 +100,12 @@ def fetch_token(user_name: str):
 def search_files():
     logger.info(f"Received request to search with data:: {request.get_data(as_text=True, cache=False)}")
     logger.info(f"Sending request to:: {TG_SEARCH_API}")
+    req_headers = dict()
+    for key, value in request.headers.items():
+        logger.info(f"{key} --> {value}")
+        req_headers[key] = value
     try:
-        response = requests.post(url=TG_SEARCH_API, data=request.get_data(cache=False), headers=request.headers)
+        response = requests.post(url=TG_SEARCH_API, data=request.get_data(cache=False), headers=req_headers)
         logger.info(f"Received response with status:: {response.status_code} {response.reason}")
         return jsonify(json.loads(response.content)), HTTPStatus.OK if response.ok else HTTPStatus.BAD_REQUEST
     except KeyError:
