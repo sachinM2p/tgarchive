@@ -4,9 +4,10 @@ import json
 import logging
 import requests
 from http import HTTPStatus
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from dotenv import load_dotenv
+from typing import Optional
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -14,12 +15,14 @@ flask_app = Flask(__name__)
 CORS(flask_app)
 CONFIG_FILE_URL = os.getenv(key="CONFIG_FILE_URL")
 TG_AUTH_DATA = list()
-TG_AUTH_API = None
+TG_AUTH_API: Optional[str] = None
+TG_SEARCH_API: Optional[str] = None
 
 
 def setup_config():
     global TG_AUTH_DATA
     global TG_AUTH_API
+    global TG_SEARCH_API
     if CONFIG_FILE_URL is None:
         logger.error("CONFIG_FILE_URL not provided")
         return
@@ -34,6 +37,7 @@ def setup_config():
                 for auth_data in TG_AUTH_DATA:
                     logger.info(f"Loaded token data for:: {auth_data['auth_data']['username']}")
                 TG_AUTH_API = os.getenv(key='TG_AUTH_API')
+                TG_SEARCH_API = os.getenv(key='TG_SEARCH_API')
         else:
             logger.error(f"Failed to download config file:: [{config_file.status_code} {config_file.reason}]")
     except UnicodeDecodeError:
@@ -90,6 +94,23 @@ def fetch_token(user_name: str):
         error_msg = "Json decode error while processing"
         logger.error(error_msg)
     return jsonify({'msg': error_msg})
+
+
+@flask_app.post("/search")
+def search_files():
+    logger.info(f"Received request to search with data:: {request.get_data(as_text=True, cache=False)}")
+    logger.info(f"Sending request to:: {TG_SEARCH_API}")
+    try:
+        response = requests.post(url=TG_SEARCH_API, data=request.get_data(cache=False), headers=request.headers)
+        logger.info(f"Received response with status:: {response.status_code} {response.reason}")
+        return response
+    except KeyError:
+        err_msg = "Invalid request data received"
+        logger.error(err_msg)
+    except requests.exceptions.RequestException as err:
+        err_msg = f"Failed to search:: {err.__class__.__name__}"
+        logger.error(err_msg)
+    return jsonify({'msg': err_msg}), HTTPStatus.INTERNAL_SERVER_ERROR
 
 
 setup_config()
