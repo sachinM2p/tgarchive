@@ -108,11 +108,11 @@ def search_files():
             "Origin": os.getenv(key='TG_ARCHIVE_URL'),
             "Referer": os.getenv(key='TG_ARCHIVE_URL')
         }
-        response = requests.post(url=TG_SEARCH_API, data=json.dumps(request.get_data(cache=False, as_text=False)),
+        response = requests.post(url=TG_SEARCH_API, json=json.loads(request.get_data(cache=False, as_text=True)),
                                  headers=req_headers, timeout=5)
         logger.info(f"Received response with status:: {response.status_code} {response.reason}")
         return jsonify(json.loads(response.content)), HTTPStatus.OK if response.ok else HTTPStatus.BAD_REQUEST
-    except KeyError:
+    except (KeyError, TypeError):
         err_msg = "Invalid request data received"
         logger.error(err_msg)
     except json.JSONDecodeError:
