@@ -98,9 +98,9 @@ def fetch_token(user_name: str):
 
 @flask_app.post("/search")
 def search_files():
-    logger.info(f"Received request to search with data:: {request.get_data(as_text=True, cache=False)}")
-    logger.info(f"Sending request to:: {TG_SEARCH_API}")
     try:
+        req_data = request.get_data(as_text=True, cache=False)
+        logger.info(f"Received request to search with data:: {req_data}")
         req_headers = {
             "Authorization": request.headers.get('Authorization'),
             "Content-Length": str(request.headers.get('Content-Length')),
@@ -108,8 +108,8 @@ def search_files():
             "Origin": os.getenv(key='TG_ARCHIVE_URL'),
             "Referer": os.getenv(key='TG_ARCHIVE_URL')
         }
-        response = requests.post(url=TG_SEARCH_API, json=json.loads(request.get_data(cache=False, as_text=True)),
-                                 headers=req_headers, timeout=5)
+        logger.info(f"Sending request to:: {TG_SEARCH_API}")
+        response = requests.post(url=TG_SEARCH_API, data=req_data, headers=req_headers, timeout=5)
         logger.info(f"Received response with status:: {response.status_code} {response.reason}")
         return jsonify(json.loads(response.content)), HTTPStatus.OK if response.ok else HTTPStatus.BAD_REQUEST
     except (KeyError, TypeError):
